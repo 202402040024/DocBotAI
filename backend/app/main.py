@@ -62,6 +62,9 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     analytics_repo = AnalyticsRepository()
     stats = await analytics_repo.get_dashboard_stats(current_user["id"])
     return stats
+@app.get("/")
+async def root():
+    return {"message": "Backend Running Successfully"}
 
 @app.get("/health", tags=["System Health"])
 async def health_check():
