@@ -38,11 +38,15 @@ export default function RootPage() {
               <span className="text-sm font-semibold">Backend not reachable</span>
             </div>
             <p className="text-sm text-[var(--muted-foreground)]">
-              The API server is not running on <code className="bg-[var(--secondary)] px-1 rounded">port 8000</code>.
+              Cannot reach the API server at:<br />
+              <code className="bg-[var(--secondary)] px-1 rounded text-xs break-all">
+                {process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}
+              </code>
             </p>
-            <p className="text-xs text-[var(--muted-foreground)] mt-3 bg-[var(--secondary)] rounded-lg p-3 text-left font-mono">
-              cd D:\Training\chatbot\backend<br />
-              venv\Scripts\python.exe -m uvicorn app.main:app --port 8000 --reload
+            <p className="text-xs text-[var(--muted-foreground)] mt-3 bg-[var(--secondary)] rounded-lg p-3 text-left">
+              If you are on <strong>Vercel</strong>, make sure the{" "}
+              <code className="bg-black/20 px-1 rounded">NEXT_PUBLIC_API_URL</code> environment variable
+              is set to your Render backend URL in the Vercel dashboard, then redeploy.
             </p>
           </div>
           <button

@@ -30,7 +30,8 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { detail?: string } }; code?: string; message?: string };
       if (!axiosErr.response) {
-        setError("Cannot reach the server. Make sure the backend is running on port 8000.");
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+        setError(`Cannot reach the server at ${apiUrl}. Check that the backend is running.`);
       } else {
         setError(axiosErr.response?.data?.detail || "Invalid credentials");
       }
