@@ -1,30 +1,26 @@
-FROM python:3.12-slim
-
-# Cache bust — update this date to force full rebuild
-ARG BUILD_DATE=2026-06-21
-LABEL build_date=$BUILD_DATE
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies for FAISS and sentence-transformers
-RUN apt-get update && apt-get install -y \
+# Install only what's needed for the packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     gcc \
-    g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies
+# Install dependencies first (cached layer)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Copy app code
 COPY . .
 
-# Create upload directories
+# Pre-create upload directories
 RUN mkdir -p uploads/pdf uploads/docx uploads/csv uploads/xml uploads/vector_stores
 
 # Expose port
-EXPOSE 8000
+EXPOSE 10000
 
-# Start the server
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Start — use PORT env var from Render (default 10000)
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}
