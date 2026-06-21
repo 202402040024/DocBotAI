@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, User, Bot } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ColdStartBanner } from "@/components/ui/ColdStartBanner";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -31,8 +32,12 @@ export default function RegisterPage() {
       setUser(me);
       router.push("/chat");
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "Registration failed";
-      setError(msg);
+      const axiosErr = err as { response?: { data?: { detail?: string } } };
+      if (!axiosErr.response) {
+        setError("Cannot reach the server. The backend may be starting up — please wait 30 seconds and try again.");
+      } else {
+        setError(axiosErr.response?.data?.detail || "Registration failed");
+      }
     } finally {
       setLoading(false);
     }
@@ -40,6 +45,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] p-4">
+      <ColdStartBanner />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

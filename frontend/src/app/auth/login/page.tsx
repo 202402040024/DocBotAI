@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, Bot } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ColdStartBanner } from "@/components/ui/ColdStartBanner";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -28,10 +29,9 @@ export default function LoginPage() {
       setUser(me);
       router.push("/chat");
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { detail?: string } }; code?: string; message?: string };
+      const axiosErr = err as { response?: { data?: { detail?: string } } };
       if (!axiosErr.response) {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-        setError(`Cannot reach the server at ${apiUrl}. Check that the backend is running.`);
+        setError("Cannot reach the server. The backend may be starting up — please wait 30 seconds and try again.");
       } else {
         setError(axiosErr.response?.data?.detail || "Invalid credentials");
       }
@@ -42,6 +42,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--background)] p-4">
+      <ColdStartBanner />
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

@@ -1,12 +1,15 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 
-// In production (Vercel) this is the Render backend URL.
-// In development it falls back to localhost:8000.
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// IMPORTANT: Set NEXT_PUBLIC_API_URL in Vercel dashboard to your Render URL
+// e.g. https://docbotai-idyn.onrender.com
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://docbotai-idyn.onrender.com"; // ← hardcoded Render URL as fallback
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
+  timeout: 30000, // 30s timeout (Render free tier can be slow on cold start)
 });
 
 // Attach JWT token to every request

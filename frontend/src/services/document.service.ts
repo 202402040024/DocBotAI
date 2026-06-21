@@ -2,7 +2,9 @@ import api from "./api";
 import { Document, SearchResult, SummaryResponse, QuizResponse } from "@/types";
 
 // Direct backend URL for file uploads — Next.js proxy drops multipart/form-data with ECONNRESET
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  "https://docbotai-idyn.onrender.com";
 
 export const documentService = {
   async upload(
