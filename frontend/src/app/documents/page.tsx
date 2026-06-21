@@ -73,6 +73,8 @@ export default function DocumentsPage() {
         await documentService.upload(file, (pct) => {
           setUploadProgress(`Uploading ${file.name}… ${pct}%`);
         });
+        setUploadProgress(`✅ ${file.name} uploaded! Indexing in background…`);
+        await new Promise(r => setTimeout(r, 1500));
       } catch (err: unknown) {
         const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail || "Upload failed";
         setUploadProgress(`❌ Error: ${msg}`);

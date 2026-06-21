@@ -22,8 +22,46 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_to_mongo()
+    # Rebuild all FAISS indexes from MongoDB on startup
+    # This is critical on Render — ephemeral disk loses indexes on restart
+    await _rebuild_all_faiss_indexes()
     yield
     await close_mongo_connection()
+
+
+async def _rebuild_all_faiss_indexes():
+    """Rebuild FAISS indexes for all users from MongoDB chunks on startup."""
+    try:
+        from app.repositories.document import DocumentRepository
+        from app.services.vector_store import vector_store_service
+        from app.database.mongodb import get_database
+
+        db = get_database()
+        if db is None:
+            return
+
+        # Get all distinct user IDs that have documents
+        user_ids = await db["uploaded_documents"].distinct("user_id")
+        if not user_ids:
+            logger.info("No documents found — skipping FAISS rebuild")
+            return
+
+        doc_repo = DocumentRepository()
+        rebuilt = 0
+        for uid in user_ids:
+            try:
+                user_id_str = str(uid)
+                all_chunks = await doc_repo.get_all_user_chunks(user_id_str)
+                if all_chunks:
+                    vector_store_service.rebuild_index(user_id_str, all_chunks)
+                    rebuilt += 1
+                    logger.info(f"Rebuilt FAISS index for user {user_id_str}: {len(all_chunks)} chunks")
+            except Exception as e:
+                logger.error(f"Failed to rebuild index for user {uid}: {e}")
+
+        logger.info(f"Startup FAISS rebuild complete: {rebuilt}/{len(user_ids)} users")
+    except Exception as e:
+        logger.error(f"Startup FAISS rebuild failed: {e}")
 
 
 app = FastAPI(
