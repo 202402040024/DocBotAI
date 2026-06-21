@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
 import { Sidebar } from "./Sidebar";
 import { usePathname } from "next/navigation";
+import { KeepAlive } from "@/components/ui/KeepAlive";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -14,6 +15,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-screen bg-[var(--background)] overflow-hidden">
+      <KeepAlive />
       {/* ── Desktop sidebar ── */}
       <div className="hidden md:flex h-full">
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />

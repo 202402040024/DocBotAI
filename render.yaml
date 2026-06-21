@@ -3,9 +3,12 @@ services:
     name: docbot-backend
     runtime: python
     rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: "pip install --upgrade pip && pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1"
+    healthCheckPath: /health
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
       - key: MONGODB_URI
         sync: false
       - key: MONGODB_DB_NAME
@@ -23,9 +26,9 @@ services:
       - key: OLLAMA_BASE_URL
         value: http://localhost:11434
       - key: EMBEDDING_MODEL_NAME
-        value: BAAI/bge-small-en-v1.5
+        value: sentence-transformers/all-MiniLM-L6-v2
       - key: SIMILARITY_THRESHOLD
-        value: "0.5"
+        value: "0.3"
       - key: TOP_K
         value: "4"
       - key: UPLOAD_DIR
@@ -34,3 +37,5 @@ services:
         value: "false"
       - key: FRONTEND_URL
         sync: false
+      - key: RENDER
+        value: "true"
