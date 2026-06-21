@@ -1,15 +1,14 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 
-// IMPORTANT: Set NEXT_PUBLIC_API_URL in Vercel dashboard to your Render URL
-// e.g. https://docbotai-idyn.onrender.com
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://docbotai-idyn.onrender.com"; // ← hardcoded Render URL as fallback
+  "https://docbotai-idyn.onrender.com";
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
-  timeout: 30000, // 30s timeout (Render free tier can be slow on cold start)
+  timeout: 60000, // 60s — Render free tier cold start can take up to 50s
+  withCredentials: false, // JWT in Authorization header — no cookies needed
 });
 
 // Attach JWT token to every request
@@ -33,9 +32,11 @@ api.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem("refresh_token");
         if (!refreshToken) throw new Error("No refresh token");
-        const res = await axios.post(`${BASE_URL}/api/auth/refresh`, {
-          refresh_token: refreshToken,
-        });
+        const res = await axios.post(
+          `${BASE_URL}/api/auth/refresh`,
+          { refresh_token: refreshToken },
+          { timeout: 60000, withCredentials: false }
+        );
         const { access_token, refresh_token } = res.data;
         localStorage.setItem("access_token", access_token);
         localStorage.setItem("refresh_token", refresh_token);

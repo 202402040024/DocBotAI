@@ -32,9 +32,11 @@ app = FastAPI(
 )
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
-# FRONTEND_URL env var = your Vercel URL, e.g. https://docbotai.vercel.app
-# Supports multiple URLs separated by comma: https://a.vercel.app,https://custom.com
+# FRONTEND_URL env var = your Vercel URL (comma-separated for multiple)
+# If not set, allow all origins so deployment works out of the box
 _raw = os.getenv("FRONTEND_URL", "")
+_allow_all = not bool(_raw)  # allow * when no FRONTEND_URL is configured
+
 _allowed_origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
@@ -44,12 +46,12 @@ for url in _raw.split(","):
     if url and url not in _allowed_origins:
         _allowed_origins.append(url)
 
-logger.info(f"CORS allowed origins: {_allowed_origins}")
+logger.info(f"CORS allow_all_origins={_allow_all}, explicit_origins={_allowed_origins}")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_allowed_origins,
-    allow_credentials=True,
+    allow_origins=["*"] if _allow_all else _allowed_origins,
+    allow_credentials=False if _allow_all else True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
