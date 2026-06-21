@@ -18,15 +18,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Global flag so we only rebuild once
+_faiss_rebuilt = False
+
 
 async def _rebuild_faiss_background():
-    """
-    Rebuild FAISS indexes from MongoDB in the background.
-    Runs AFTER the server is already accepting requests so Render
-    doesn't time out waiting for the port to open.
-    """
-    # Wait a few seconds to let the server fully start
-    await asyncio.sleep(10)
+    global _faiss_rebuilt
+    if _faiss_rebuilt:
+        return
+    await asyncio.sleep(15)  # Let the server fully start first
     try:
         from app.repositories.document import DocumentRepository
         from app.services.vector_store import vector_store_service
@@ -38,62 +38,63 @@ async def _rebuild_faiss_background():
 
         user_ids = await db["uploaded_documents"].distinct("user_id")
         if not user_ids:
-            logger.info("Startup: no documents found, skipping FAISS rebuild")
+            logger.info("FAISS rebuild: no documents found, skipping")
+            _faiss_rebuilt = True
             return
 
         doc_repo = DocumentRepository()
-        rebuilt = 0
         for uid in user_ids:
             try:
-                uid_str = str(uid)
-                chunks = await doc_repo.get_all_user_chunks(uid_str)
+                chunks = await doc_repo.get_all_user_chunks(str(uid))
                 if chunks:
-                    vector_store_service.rebuild_index(uid_str, chunks)
-                    rebuilt += 1
+                    vector_store_service.rebuild_index(str(uid), chunks)
+                    logger.info(f"FAISS rebuilt for {uid}: {len(chunks)} chunks")
             except Exception as e:
                 logger.error(f"FAISS rebuild failed for {uid}: {e}")
 
-        logger.info(f"Background FAISS rebuild done: {rebuilt}/{len(user_ids)} users")
+        _faiss_rebuilt = True
+        logger.info("Background FAISS rebuild complete")
     except Exception as e:
         logger.error(f"Background FAISS rebuild error: {e}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Connect to MongoDB — fast, no model loading
-    await connect_to_mongo()
-    logger.info("MongoDB connected. Server starting on port...")
+    # Only connect to MongoDB — fast, no model loading
+    try:
+        await connect_to_mongo()
+        logger.info("MongoDB connected — server ready")
+    except Exception as e:
+        logger.error(f"MongoDB connection failed: {e}")
+        # Don't crash — let health endpoint still work
 
-    # Schedule FAISS rebuild as background task — does NOT block port binding
-    asyncio.create_task(_rebuild_faiss_background())
+    # Schedule FAISS rebuild AFTER yield (non-blocking)
+    task = asyncio.ensure_future(_rebuild_faiss_background())
 
-    yield  # ← Server is accepting requests from this point
+    yield  # Server starts accepting requests immediately
 
+    task.cancel()
     await close_mongo_connection()
 
 
 app = FastAPI(
-    title="Multi-Document AI Chatbot & Hybrid RAG System",
-    description="Enterprise-Grade AI Chatbot with FAISS, MongoDB, RAG, Memory, and Voice.",
+    title="Multi-Document AI Chatbot",
     version="1.0.0",
     lifespan=lifespan,
     debug=settings.DEBUG,
 )
 
 
-# ── Dynamic CORS ───────────────────────────────────────────────────────────────
+# ── Dynamic CORS ──────────────────────────────────────────────────────────────
 _EXTRA = [u.strip() for u in os.getenv("FRONTEND_URL", "").split(",") if u.strip()]
-_STATIC_ORIGINS = {
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    *_EXTRA,
-}
+_STATIC_ORIGINS = {"http://localhost:3000", "http://127.0.0.1:3000", *_EXTRA}
 
 
 def _is_allowed_origin(origin: str) -> bool:
+    if not origin:
+        return False
     if origin in _STATIC_ORIGINS:
         return True
-    # Allow all Vercel preview + production URLs automatically
     if re.match(r"^https://[\w-]+(\.vercel\.app)$", origin):
         return True
     return False
@@ -140,12 +141,8 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
     return await AnalyticsRepository().get_dashboard_stats(current_user["id"])
 
 
-# ── Health ────────────────────────────────────────────────────────────────────
+# ── Health — must respond instantly ──────────────────────────────────────────
 @app.get("/", tags=["Health"])
 @app.get("/health", tags=["Health"])
 async def health_check():
-    return {
-        "status": "healthy",
-        "service": "docbot-backend",
-        "version": "1.0.0",
-    }
+    return {"status": "healthy", "service": "docbot-backend", "version": "1.0.0"}
