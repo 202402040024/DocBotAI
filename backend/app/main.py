@@ -75,4 +75,10 @@ async def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
 @app.get("/", tags=["Health"])
 @app.get("/health", tags=["Health"])
 async def health_check():
-    return {"status": "healthy", "service": "docbot-backend", "version": "1.0.0"}
+    return {
+        "status": "healthy",
+        "service": "docbot-backend",
+        "version": "1.0.0",
+        "cors_mode": "allow_all" if _allow_all else "restricted",
+        "allowed_origins": ["*"] if _allow_all else _allowed_origins
+    }

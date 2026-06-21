@@ -1,5 +1,9 @@
 FROM python:3.12-slim
 
+# Cache bust — update this date to force full rebuild
+ARG BUILD_DATE=2026-06-21
+LABEL build_date=$BUILD_DATE
+
 WORKDIR /app
 
 # Install system dependencies for FAISS and sentence-transformers
