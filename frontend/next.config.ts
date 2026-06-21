@@ -1,11 +1,15 @@
 import type { NextConfig } from "next";
 
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
+        // Proxy /api/* → backend (works both locally and on Vercel)
         source: "/api/:path*",
-        destination: "http://localhost:8000/api/:path*",
+        destination: `${BACKEND_URL}/api/:path*`,
       },
     ];
   },

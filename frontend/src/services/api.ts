@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from "axios";
 
-// Use relative URL so requests go through Next.js proxy → no CORS issues
-const BASE_URL = "";
+// In production (Vercel) this is the Render backend URL.
+// In development it falls back to localhost:8000.
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -29,7 +30,7 @@ api.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem("refresh_token");
         if (!refreshToken) throw new Error("No refresh token");
-        const res = await axios.post("/api/auth/refresh", {
+        const res = await axios.post(`${BASE_URL}/api/auth/refresh`, {
           refresh_token: refreshToken,
         });
         const { access_token, refresh_token } = res.data;
@@ -40,7 +41,7 @@ api.interceptors.response.use(
       } catch {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
-        window.location.href = "/auth/login";
+        if (typeof window !== "undefined") window.location.href = "/auth/login";
       }
     }
     return Promise.reject(error);
@@ -48,5 +49,4 @@ api.interceptors.response.use(
 );
 
 export default api;
-// Keep BASE_URL export for SSE streaming — use empty string for proxy
 export { BASE_URL };
