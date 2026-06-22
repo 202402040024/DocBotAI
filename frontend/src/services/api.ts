@@ -2,7 +2,7 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 
 
 const BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://docbotai-idyn.onrender.com";
+  "https://docbotai-2.onrender.com";
 
 const api: AxiosInstance = axios.create({
   baseURL: BASE_URL,

@@ -1,12 +1,10 @@
 """
-Embedding service — uses Gemini text-embedding-004 API.
-No sentence-transformers / torch required → fits in Render free tier (512 MB RAM).
-Falls back to deterministic hash-based vectors if Gemini key is missing.
+Embedding service — uses Gemini gemini-embedding-001 API (3072 dim).
+No sentence-transformers / torch required → fits in Render free tier.
+Falls back to deterministic hash-based vectors if Gemini key is missing or fails.
 """
 import hashlib
 import logging
-import os
-import math
 from typing import List
 
 import httpx
@@ -16,17 +14,17 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# Gemini embedding dimension
-GEMINI_EMBED_DIM = 768
+GEMINI_EMBED_MODEL = "gemini-embedding-001"
+GEMINI_EMBED_DIM = 3072
 FALLBACK_DIM = 384
 
 
 class EmbeddingService:
     def __init__(self):
-        self.dimension = GEMINI_EMBED_DIM if settings.GEMINI_API_KEY else FALLBACK_DIM
         self._use_gemini = bool(settings.GEMINI_API_KEY)
+        self.dimension = GEMINI_EMBED_DIM if self._use_gemini else FALLBACK_DIM
         logger.info(
-            f"EmbeddingService init — mode={'gemini' if self._use_gemini else 'hash-fallback'} "
+            f"EmbeddingService — mode={'gemini' if self._use_gemini else 'hash-fallback'}, "
             f"dim={self.dimension}"
         )
 
@@ -40,6 +38,7 @@ class EmbeddingService:
                 return self._gemini_batch(texts)
             except Exception as e:
                 logger.warning(f"Gemini embedding failed ({e}), using hash fallback")
+                self.dimension = FALLBACK_DIM
         return [self._hash_vector(t, FALLBACK_DIM) for t in texts]
 
     def get_embedding(self, text: str) -> List[float]:
@@ -48,45 +47,33 @@ class EmbeddingService:
     # ── Gemini API ────────────────────────────────────────────────────────────
 
     def _gemini_batch(self, texts: List[str]) -> List[List[float]]:
-        """
-        Call Gemini text-embedding-004 in batches of 100 (API limit).
-        Uses httpx synchronously — called from thread pool via run_in_executor.
-        """
-        results: List[List[float]] = []
-        batch_size = 20  # stay well under API limits
-
-        for i in range(0, len(texts), batch_size):
-            batch = texts[i: i + batch_size]
-            batch_results = self._gemini_call(batch)
-            results.extend(batch_results)
-
-        self.dimension = len(results[0]) if results else GEMINI_EMBED_DIM
+        """Call embedContent one by one — batchEmbedContents not supported for this model."""
+        results = []
+        for text in texts:
+            vec = self._gemini_single(text)
+            results.append(vec)
+        # Update dimension from first result
+        if results:
+            self.dimension = len(results[0])
         return results
 
-    def _gemini_call(self, texts: List[str]) -> List[List[float]]:
+    def _gemini_single(self, text: str) -> List[float]:
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
-            f"text-embedding-004:batchEmbedContents?key={settings.GEMINI_API_KEY}"
+            f"{GEMINI_EMBED_MODEL}:embedContent?key={settings.GEMINI_API_KEY}"
         )
         payload = {
-            "requests": [
-                {
-                    "model": "models/text-embedding-004",
-                    "content": {"parts": [{"text": t}]},
-                }
-                for t in texts
-            ]
+            "content": {"parts": [{"text": text[:8000]}]}  # cap at 8k chars
         }
-        with httpx.Client(timeout=30.0) as client:
+        with httpx.Client(timeout=20.0) as client:
             resp = client.post(url, json=payload)
             resp.raise_for_status()
             data = resp.json()
 
-        embeddings = []
-        for item in data.get("embeddings", []):
-            vec = item.get("values", [])
-            embeddings.append(self._normalize(vec))
-        return embeddings
+        vec = data.get("embedding", {}).get("values", [])
+        if not vec:
+            raise ValueError("Empty embedding returned from Gemini")
+        return self._normalize(vec)
 
     # ── Fallback ──────────────────────────────────────────────────────────────
 

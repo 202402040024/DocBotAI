@@ -4,7 +4,7 @@ import { ChatSession, ChatMessage } from "@/types";
 // Direct backend URL only for SSE streaming (Next.js proxy buffers SSE and breaks it)
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://docbotai-idyn.onrender.com";
+  "https://docbotai-2.onrender.com";
 
 export const chatService = {
   async createSession(title: string): Promise<ChatSession> {
