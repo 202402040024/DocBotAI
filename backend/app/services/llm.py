@@ -8,11 +8,13 @@ logger = logging.getLogger(__name__)
 
 # Try these models in order until one works
 GEMINI_MODELS = [
+    "gemini-flash-latest",       # highest free tier quota
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash-lite",
     "gemini-2.5-flash",
     "gemini-2.0-flash",
-    "gemini-1.5-flash",
     "gemini-1.5-flash-8b",
-    "gemini-1.0-pro",
+    "gemini-1.5-flash",
 ]
 
 
@@ -28,16 +30,17 @@ class LLMService:
                 try:
                     result = await self._call_gemini(model, messages, temperature)
                     if result:
+                        logger.info(f"Gemini response OK via {model}")
                         return result
                 except httpx.HTTPStatusError as e:
-                    if e.response.status_code in (429, 503):
-                        logger.warning(f"Gemini {model} overloaded ({e.response.status_code}), trying next...")
-                        continue
-                    logger.error(f"Gemini {model} error: {e}")
-                    break
+                    if e.response.status_code in (429, 503, 500):
+                        logger.warning(f"Gemini {model} quota/overload ({e.response.status_code}), trying next...")
+                        continue  # try next model
+                    logger.error(f"Gemini {model} HTTP error {e.response.status_code}")
+                    continue
                 except Exception as e:
                     logger.error(f"Gemini {model} failed: {e}")
-                    break
+                    continue
 
         try:
             return await self._call_ollama(messages, temperature)
@@ -57,16 +60,17 @@ class LLMService:
                         collected += chunk
                         yield chunk
                     if collected:
+                        logger.info(f"Gemini stream OK via {model}")
                         return
                 except httpx.HTTPStatusError as e:
-                    if e.response.status_code in (429, 503):
-                        logger.warning(f"Gemini stream {model} overloaded, trying next...")
+                    if e.response.status_code in (429, 503, 500):
+                        logger.warning(f"Gemini stream {model} quota/overload ({e.response.status_code}), trying next...")
                         continue
-                    logger.error(f"Gemini stream {model} HTTP error: {e}")
-                    break
+                    logger.error(f"Gemini stream {model} error {e.response.status_code}")
+                    continue
                 except Exception as e:
                     logger.error(f"Gemini stream {model} failed: {e}")
-                    break
+                    continue
 
         try:
             async for chunk in self._stream_ollama(messages, temperature):
