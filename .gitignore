@@ -32,11 +32,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # ─── Uploaded files (user data) ───────────────────────────────────────────────
-backend/uploads/pdf/
-backend/uploads/docx/
-backend/uploads/csv/
-backend/uploads/xml/
-backend/uploads/vector_stores/
+uploads/
+backend/uploads/
 
 # ─── IDE ──────────────────────────────────────────────────────────────────────
 .vscode/settings.json
@@ -45,3 +42,10 @@ backend/uploads/vector_stores/
 *.swo
 .DS_Store
 Thumbs.db
+
+# ─── Vercel ───────────────────────────────────────────────────────────────────
+.vercel
+
+# ─── TypeScript ───────────────────────────────────────────────────────────────
+*.tsbuildinfo
+next-env.d.ts

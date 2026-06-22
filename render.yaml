@@ -1,8 +1,7 @@
 services:
   - type: web
-    name: docbot-backend
+    name: docbot-ai
     runtime: docker
-    rootDir: backend
     dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     envVars:
@@ -22,8 +21,6 @@ services:
         sync: false
       - key: OLLAMA_BASE_URL
         value: http://localhost:11434
-      - key: EMBEDDING_MODEL_NAME
-        value: sentence-transformers/all-MiniLM-L6-v2
       - key: SIMILARITY_THRESHOLD
         value: "0.3"
       - key: TOP_K
@@ -32,7 +29,5 @@ services:
         value: ./uploads
       - key: DEBUG
         value: "false"
-      - key: FRONTEND_URL
-        sync: false
       - key: RENDER
         value: "true"

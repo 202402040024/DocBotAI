@@ -1,0 +1,160 @@
+/* ── Global Reset ─────────────────────────────────────────── */
+#MainMenu, footer, header { visibility: hidden; }
+.block-container { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+
+/* ── Chat Messages ────────────────────────────────────────── */
+.user-message {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    padding: 0.8rem 1.1rem;
+    border-radius: 18px 18px 4px 18px;
+    margin: 0.4rem 0;
+    max-width: 85%;
+    margin-left: auto;
+    word-wrap: break-word;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.3);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.assistant-message {
+    background: var(--secondary-background-color, #f8fafc);
+    color: var(--text-color, #1e293b);
+    padding: 0.8rem 1.1rem;
+    border-radius: 18px 18px 18px 4px;
+    margin: 0.4rem 0;
+    max-width: 88%;
+    word-wrap: break-word;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* ── Citation Card ────────────────────────────────────────── */
+.citation-card {
+    background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    border: 1px solid #93c5fd;
+    border-left: 4px solid #2563eb;
+    border-radius: 8px;
+    padding: 0.6rem 0.9rem;
+    margin: 0.3rem 0;
+    font-size: 0.82rem;
+    color: #1e40af;
+}
+
+.citation-card strong { color: #1d4ed8; }
+.citation-score {
+    display: inline-block;
+    background: #2563eb;
+    color: white;
+    padding: 1px 7px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+/* ── Stat Cards ───────────────────────────────────────────── */
+.stat-card {
+    background: var(--secondary-background-color, #f8fafc);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 1.2rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2563eb;
+    line-height: 1;
+}
+.stat-label { font-size: 0.82rem; color: #64748b; margin-top: 4px; font-weight: 500; }
+
+/* ── Document Card ────────────────────────────────────────── */
+.doc-card {
+    background: var(--secondary-background-color, #f8fafc);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    transition: border-color 0.2s;
+}
+.doc-card:hover { border-color: #2563eb; }
+.doc-type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.badge-pdf { background: #fee2e2; color: #dc2626; }
+.badge-docx { background: #dbeafe; color: #1d4ed8; }
+.badge-csv { background: #d1fae5; color: #059669; }
+.badge-xml { background: #fef3c7; color: #d97706; }
+
+/* ── Sidebar Styling ──────────────────────────────────────── */
+.sidebar-session {
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.3rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    border: 1px solid transparent;
+    transition: background 0.15s, border-color 0.15s;
+}
+.sidebar-session:hover { background: rgba(37,99,235,0.08); border-color: #93c5fd; }
+.sidebar-session.active { background: rgba(37,99,235,0.12); border-color: #2563eb; color: #1d4ed8; font-weight: 600; }
+
+/* ── Login Page ───────────────────────────────────────────── */
+.login-header {
+    text-align: center;
+    padding: 2rem 0 1rem;
+}
+.login-icon {
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+}
+.login-title { font-size: 1.8rem; font-weight: 700; color: #1e293b; }
+.login-subtitle { color: #64748b; font-size: 0.95rem; }
+
+/* ── Typing Indicator ─────────────────────────────────────── */
+.typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0.6rem 1rem;
+}
+.typing-dot {
+    width: 8px; height: 8px;
+    background: #94a3b8;
+    border-radius: 50%;
+    animation: bounce 1.2s infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.6; }
+    30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ── Scrollable Chat ──────────────────────────────────────── */
+.chat-container {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding-right: 4px;
+    scrollbar-width: thin;
+}
+
+/* ── Buttons ──────────────────────────────────────────────── */
+.stButton > button {
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    transition: all 0.15s !important;
+}
+.stButton > button:hover { transform: translateY(-1px); }
